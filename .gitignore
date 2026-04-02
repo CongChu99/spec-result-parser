@@ -1,0 +1,33 @@
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
+
+# c4flow state (local-only, not committed)
+docs/c4flow/.state.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
