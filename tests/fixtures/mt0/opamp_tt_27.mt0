@@ -1,0 +1,13 @@
+$ Title: HSPICE Opamp TT corner 27C — measurement results
+$ Version: 2020.09
+$ Date: Thu Apr  2 16:00:00 2026
+$ Corner: tt
+*
+.option post
+*
+gain_dc=6.85000e+01
+ugbw=1.25000e+07
+pm=6.72300e+01
+offset_v=1.23456e-04
+cmrr=8.50000e+01
+psrr=7.80000e+01
