@@ -7,6 +7,19 @@ Commands:
 import sys
 import click
 
+from spec_result_parser.checker import SpecChecker
+from spec_result_parser.format_detector import detect
+from spec_result_parser.models import ConfigError, Format, ParseError
+from spec_result_parser.parsers.hspice_mt0 import parse_hspice_mt0
+from spec_result_parser.parsers.psf_ascii import parse_psf_ascii
+from spec_result_parser.renderer import TerminalRenderer
+from spec_result_parser.spec_loader import load_spec
+
+_PARSERS = {
+    Format.PSF_ASCII: parse_psf_ascii,
+    Format.HSPICE_MT0: parse_hspice_mt0,
+}
+
 
 @click.group()
 @click.version_option()
@@ -35,8 +48,34 @@ def check(result_file: str, spec: str, margin_threshold: float, verbose: bool) -
       1 — one or more FAIL
       2 — file parse error or config error
     """
-    click.echo("TODO: check not yet implemented")
-    sys.exit(0)
+    from pathlib import Path
+    path = Path(result_file)
+
+    try:
+        fmt = detect(path)
+        if fmt is None:
+            raise ConfigError(f"Unsupported file format: {path.suffix!r}")
+
+        parse_fn = _PARSERS[fmt]
+        measurements = parse_fn(path)
+        spec_targets = load_spec(spec)
+    except (ConfigError, ParseError) as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
+
+    checks = [
+        SpecChecker.check(m, spec_targets.get(m.name), margin_threshold=margin_threshold)
+        for m in measurements
+    ]
+
+    TerminalRenderer.render_single(checks)
+
+    from spec_result_parser.models import Status
+    has_fail = any(ch.status == Status.FAIL for ch in checks)
+    sys.exit(1 if has_fail else 0)
 
 
 @main.command()
