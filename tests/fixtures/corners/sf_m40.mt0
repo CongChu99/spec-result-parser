@@ -1,0 +1,6 @@
+$ HSPICE — SF corner -40C (MT0 format)
+gain_dc=5.50e+01
+ugbw=9.50e+06
+pm=4.20e+01
+offset_v=4.80e-03
+cmrr=6.80e+01

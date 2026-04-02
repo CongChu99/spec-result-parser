@@ -1,0 +1,6 @@
+$ HSPICE — TT corner 27C (MT0 format)
+gain_dc=6.85e+01
+ugbw=1.25e+07
+pm=6.72e+01
+offset_v=1.00e-04
+cmrr=8.50e+01
