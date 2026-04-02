@@ -99,8 +99,24 @@ def aggregate(folder: str, spec: str, corners: str, margin_threshold: float,
       1 — one or more corners FAIL
       2 — error reading files or spec
     """
-    click.echo("TODO: aggregate not yet implemented")
-    sys.exit(0)
+    from pathlib import Path
+    from spec_result_parser.corner_aggregator import CornerAggregator
+    from spec_result_parser.models import Status
+
+    try:
+        spec_targets = load_spec(spec)
+        corner_list = CornerAggregator.aggregate(Path(folder), spec_targets)
+    except (ConfigError, ParseError) as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
+
+    TerminalRenderer.render_corners(corner_list)
+
+    has_fail = any(c.overall_status == Status.FAIL for c in corner_list)
+    sys.exit(1 if has_fail else 0)
 
 
 if __name__ == "__main__":
