@@ -1,0 +1,8 @@
+$ HSPICE v2023 format — mixed headers and measurement lines
+.option post
+$ Inline comment lines
+gain_dc=6.85e+01
+* Block comment
+ugbw=1.25e+07
+pm=6.72e+01
+input_offset=-1.23e-03
