@@ -1,0 +1,17 @@
+tt_27:
+  file: tt_27.psf
+  process: TT
+  voltage: 1.8
+  temp: 27
+
+ss_125:
+  file: ss_125.psf
+  process: SS
+  voltage: 1.62
+  temp: 125
+
+ff_m40:
+  file: ff_m40.psf
+  process: FF
+  voltage: 1.98
+  temp: -40
