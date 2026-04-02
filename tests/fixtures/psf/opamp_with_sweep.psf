@@ -1,0 +1,21 @@
+// Spectre PSF ASCII
+// Fixture with SWEEP section — parser must skip waveform data and only read VALUE scalars
+HEADER
+"PSFversion" "1.1"
+"simulator" "spectre"
+END HEADER
+
+TYPE
+"real" FLOAT DOUBLE
+END TYPE
+
+SWEEP
+"freq" FLOAT DOUBLE 1.0e+03
+"freq" FLOAT DOUBLE 1.0e+06
+"freq" FLOAT DOUBLE 1.0e+09
+END SWEEP
+
+VALUE
+"gain_dc" FLOAT DOUBLE 6.85000e+01 dB
+"pm" FLOAT DOUBLE 6.72300e+01 deg
+END VALUE

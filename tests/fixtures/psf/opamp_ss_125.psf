@@ -1,0 +1,23 @@
+// Spectre PSF ASCII
+// Opamp SS corner 125C — minimal fixture
+HEADER
+"PSFversion" "1.1"
+"simulator" "spectre"
+"date" "4:00:00 PM, April 2, 2026"
+"design" "opamp_core"
+END HEADER
+
+TYPE
+"real" FLOAT DOUBLE PROP(
+"units" ""
+"scale" "LINEAR"
+"grid" 1
+)
+END TYPE
+
+VALUE
+"gain_dc" FLOAT DOUBLE 6.21000e+01 dB
+"ugbw" FLOAT DOUBLE 9.80000e+06 Hz
+"pm" FLOAT DOUBLE 5.11000e+01 deg
+"offset_v" FLOAT DOUBLE 2.50000e-04 V
+END VALUE

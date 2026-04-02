@@ -1,0 +1,25 @@
+// Spectre PSF ASCII
+// Opamp TT corner 27C — minimal fixture for parser testing
+HEADER
+"PSFversion" "1.1"
+"simulator" "spectre"
+"date" "4:00:00 PM, April 2, 2026"
+"design" "opamp_core"
+END HEADER
+
+TYPE
+"real" FLOAT DOUBLE PROP(
+"units" ""
+"scale" "LINEAR"
+"grid" 1
+)
+END TYPE
+
+VALUE
+"gain_dc" FLOAT DOUBLE 6.85000e+01 dB
+"ugbw" FLOAT DOUBLE 1.25000e+07 Hz
+"pm" FLOAT DOUBLE 6.72300e+01 deg
+"offset_v" FLOAT DOUBLE 1.23456e-04 V
+"cmrr" FLOAT DOUBLE 8.50000e+01 dB
+"psrr" FLOAT DOUBLE 7.80000e+01 dB
+END VALUE
