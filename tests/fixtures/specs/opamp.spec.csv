@@ -1,0 +1,6 @@
+measurement,min,max,unit
+gain_dc,60,,dB
+ugbw,10.0e6,,Hz
+pm,45,,deg
+offset_v,,5.0e-3,V
+cmrr,70,,dB

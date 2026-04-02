@@ -1,0 +1,6 @@
+specs:
+  gain_dc:  { min: 60,    max: null, unit: dB  }
+  ugbw:     { min: 10.0e6, max: null, unit: Hz  }
+  pm:       { min: 45,    max: null, unit: deg }
+  offset_v: { min: null,  max: 5.0e-3, unit: V   }
+  cmrr:     { min: 70,    max: null, unit: dB  }
