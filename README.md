@@ -1,6 +1,6 @@
 # spec-result-parser
 
-**CLI tool for analog IC engineers** — automated PASS/FAIL spec checking of Spectre PSF-ASCII and HSPICE MT0 simulation results.
+**CLI tool for analog IC engineers** — automated PASS/FAIL spec checking of Spectre PSF-ASCII, HSPICE MT0, and Cadence binary PSF simulation results.
 
 [![CI](https://github.com/CongChu99/spec-result-parser/actions/workflows/ci.yml/badge.svg)](https://github.com/CongChu99/spec-result-parser/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/spec-result-parser)](https://pypi.org/project/spec-result-parser/)
@@ -98,6 +98,9 @@ spec-parser check RESULT_FILE --spec SPEC_FILE [OPTIONS]
 Options:
   -s, --spec PATH               YAML or CSV spec file [required]
   --margin-threshold FLOAT      % within a limit to flag as MARGIN [default: 10.0]
+  --format [csv|json|html]      Export results in this format
+  --output PATH                 Write output to this file (auto-detect format from extension)
+  --quiet                       Suppress terminal table output (useful for CI pipelines)
   -v, --verbose                 Enable debug output
   --version                     Show version and exit
 ```
@@ -111,6 +114,9 @@ Options:
   -s, --spec PATH               YAML or CSV spec file [required]
   --corners PATH                Optional YAML mapping filenames to corner names
   --margin-threshold FLOAT      % within a limit to flag as MARGIN [default: 10.0]
+  --format [csv|json|html]      Export results in this format
+  --output PATH                 Write output to this file (auto-detect format from extension)
+  --quiet                       Suppress terminal table output
   -v, --verbose                 Enable debug output
 ```
 
@@ -119,7 +125,14 @@ Options:
 | Format | Extension | Simulator |
 |--------|-----------|-----------|
 | Spectre PSF-ASCII | `.psf` | Cadence Spectre |
+| Cadence Binary PSF | `.psf` | Cadence Spectre (binary) |
 | HSPICE MT0 | `.mt0` | Synopsys HSPICE |
+
+Binary PSF support requires an optional dependency:
+
+```bash
+pip install spec-result-parser[binary]
+```
 
 ## Status Values
 
@@ -129,6 +142,81 @@ Options:
 | `MARGIN` | Passes but within `margin_threshold`% of a limit |
 | `FAIL` | Value violates min or max bound |
 | `N/A` | No spec defined for this measurement |
+
+## What's New in v0.2.0
+
+### Export to CSV, JSON, and HTML
+
+Export results directly from the CLI instead of copy-pasting into spreadsheets:
+
+```bash
+# Export a PASS/FAIL table as CSV
+spec-parser check result.psf --spec opamp.spec.yaml --output report.csv
+
+# Export as JSON (machine-readable, includes metadata and timestamps)
+spec-parser check result.psf --spec opamp.spec.yaml --output report.json
+
+# Export as a standalone HTML dashboard (dark theme, filterable table, Chart.js bar chart)
+spec-parser check result.psf --spec opamp.spec.yaml --output report.html
+
+# Same options work with aggregate
+spec-parser aggregate ./corners/ --spec opamp.spec.yaml --output corners.html
+```
+
+Format is inferred from the file extension automatically. Use `--format` to override:
+
+```bash
+spec-parser check result.psf --spec opamp.spec.yaml --format json
+```
+
+Use `--quiet` to suppress the terminal table (useful in CI pipelines):
+
+```bash
+spec-parser check result.psf --spec opamp.spec.yaml \
+  --output report.json --quiet
+echo $?  # 0 = PASS, 1 = FAIL
+```
+
+### Binary PSF Support
+
+Native Cadence binary PSF files are now auto-detected by magic bytes and parsed via
+[libpsf](https://pypi.org/project/libpsf/):
+
+```bash
+pip install spec-result-parser[binary]
+spec-parser check result.psf --spec opamp.spec.yaml
+```
+
+### Waveform Expression Evaluator (YAML only)
+
+For binary PSF files with swept waveforms, define how to extract a scalar spec value
+using a `measure:` expression in your YAML spec:
+
+```yaml
+specs:
+  ugbw:
+    min: 10.0e6
+    unit: Hz
+    measure: "cross(vout_db, 0)"   # x-value where vout_db crosses 0 dB
+  pm:
+    min: 45
+    unit: deg
+    measure: "phase_margin(gain, phase)"
+  gain_peak:
+    min: 60
+    unit: dB
+    measure: "max(vout_db)"
+```
+
+Supported expressions:
+
+| Expression | Description |
+|------------|-------------|
+| `max(sig)` | Maximum value of waveform |
+| `min(sig)` | Minimum value of waveform |
+| `at(sig, x)` | Waveform value at a specific x-axis point |
+| `cross(sig, level)` | x-axis value at first rising crossing of `level` |
+| `phase_margin(gain, phase)` | 180° + phase at unity-gain (0 dB) crossing |
 
 ## License
 
