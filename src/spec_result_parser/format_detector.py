@@ -1,6 +1,7 @@
 """FormatDetector — auto-detect simulation file format from extension + optional header sniff."""
 from __future__ import annotations
 
+import struct
 from pathlib import Path
 from typing import Optional, Union
 
@@ -14,6 +15,7 @@ _EXT_MAP = {
 # PSF-ASCII files must be valid text and typically start with HEADER or a quoted string.
 # If the first bytes look binary (contains null bytes), reject.
 _PSF_BINARY_CHECK_BYTES = 256
+_PSF_BINARY_MAGIC = struct.pack(">I", 1)   # 0x00 0x00 0x00 0x01
 
 
 def detect(filepath: Union[str, Path]) -> Optional[Format]:
@@ -39,10 +41,15 @@ def detect(filepath: Union[str, Path]) -> Optional[Format]:
     if fmt is None:
         return None
 
-    # Header sniff for PSF-ASCII: reject binary files
+    # Header sniff for PSF-ASCII: check magic bytes FIRST, then reject other binary files
     if fmt == Format.PSF_ASCII:
         raw = path.read_bytes()
-        if b"\x00" in raw[:_PSF_BINARY_CHECK_BYTES]:
+        header = raw[:_PSF_BINARY_CHECK_BYTES]
+        # Check magic bytes FIRST — binary PSF starts with 0x00000001
+        if header[:4] == _PSF_BINARY_MAGIC:
+            return Format.PSF_BINARY
+        # Reject other binary files
+        if b"\x00" in header:
             return None
 
     return fmt

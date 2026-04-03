@@ -80,3 +80,31 @@ class TestHeaderSniff:
     def test_nonexistent_file_raises(self):
         with pytest.raises((FileNotFoundError, OSError)):
             detect(Path("/nonexistent/path/result.psf"))
+
+
+# ---------------------------------------------------------------------------
+# Task 2: Binary PSF magic bytes detection
+# ---------------------------------------------------------------------------
+
+import struct
+
+
+def test_binary_psf_detected_by_magic(tmp_path):
+    # Binary PSF magic: 4-byte big-endian int 0x00000001 at offset 0
+    f = tmp_path / "result.psf"
+    f.write_bytes(struct.pack(">I", 1) + b"\x00" * 100)
+    assert detect(f) == Format.PSF_BINARY
+
+
+def test_ascii_psf_still_detected(tmp_path):
+    f = tmp_path / "result.psf"
+    f.write_text('HEADER\n"simulator" "spectre"\n')
+    assert detect(f) == Format.PSF_ASCII
+
+
+def test_binary_psf_wrong_magic_returns_none(tmp_path):
+    # Has null bytes but wrong magic — not a known binary PSF
+    f = tmp_path / "result.psf"
+    f.write_bytes(b"\xDE\xAD\xBE\xEF" + b"\x00" * 100)
+    assert detect(f) is None
+
