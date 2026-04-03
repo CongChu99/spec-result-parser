@@ -103,3 +103,39 @@ class TestCsvSpecLoader:
         bad.write_text("gain_dc=60\n")
         with pytest.raises(ConfigError, match="Unsupported spec file format"):
             load_spec(bad)
+
+
+# ---------------------------------------------------------------------------
+# Task 3: measure: field in YAML / CSV error
+# ---------------------------------------------------------------------------
+
+
+def test_yaml_measure_field_loaded(tmp_path):
+    spec_file = tmp_path / "opamp.yaml"
+    spec_file.write_text("""
+specs:
+  ugbw:
+    min: 10.0e6
+    max: null
+    unit: Hz
+    measure: "cross(vout_db, 0)"
+""")
+    targets = load_spec(spec_file)
+    assert targets["ugbw"].measure == "cross(vout_db, 0)"
+
+
+def test_yaml_measure_defaults_none(tmp_path):
+    spec_file = tmp_path / "opamp.yaml"
+    spec_file.write_text("""
+specs:
+  gain_dc: { min: 60, max: null, unit: dB }
+""")
+    targets = load_spec(spec_file)
+    assert targets["gain_dc"].measure is None
+
+
+def test_csv_measure_raises_config_error(tmp_path):
+    spec_file = tmp_path / "opamp.csv"
+    spec_file.write_text("measurement,min,max,unit,measure\ngain_dc,60,,dB,max(vout)\n")
+    with pytest.raises(ConfigError, match="'measure:' is only supported in YAML spec files"):
+        load_spec(spec_file)

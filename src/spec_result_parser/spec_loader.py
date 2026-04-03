@@ -93,6 +93,7 @@ def _load_yaml(path: Path) -> Dict[str, SpecTarget]:
             min_val=_parse_float_or_none(entry.get("min")),
             max_val=_parse_float_or_none(entry.get("max")),
             unit=entry.get("unit"),
+            measure=entry.get("measure") or None,
         )
 
     return targets
@@ -113,6 +114,9 @@ def _load_csv(path: Path) -> Dict[str, SpecTarget]:
                     f"Cannot load spec file: {path.name} — "
                     f"missing required columns: {sorted(missing)}"
                 )
+
+            if "measure" in headers:
+                raise ConfigError("'measure:' is only supported in YAML spec files")
 
             targets: Dict[str, SpecTarget] = {}
             for row in reader:
