@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 # ---------------------------------------------------------------------------
@@ -21,6 +24,7 @@ class Format(Enum):
 
     PSF_ASCII = "psf_ascii"
     HSPICE_MT0 = "hspice_mt0"
+    PSF_BINARY = "psf_binary"
     UNKNOWN = "unknown"
 
     @classmethod
@@ -57,6 +61,17 @@ class Measurement:
     fmt: Format
 
 
+@dataclass
+class Waveform:
+    """A swept or waveform signal from a simulation result file."""
+
+    sweep_var: str
+    x: "np.ndarray"
+    y: "np.ndarray"
+    unit: Optional[str]
+    fmt: Format = Format.PSF_BINARY
+
+
 @dataclass(frozen=True)
 class SpecTarget:
     """Min/max bounds for a single measurement from a spec file."""
@@ -65,6 +80,7 @@ class SpecTarget:
     min_val: Optional[float]
     max_val: Optional[float]
     unit: Optional[str]
+    measure: Optional[str] = None   # waveform expression, YAML only
 
 
 @dataclass(frozen=True)

@@ -8,6 +8,7 @@ Acceptance criteria:
 - Unit tests for dataclass construction pass
 """
 import pytest
+import numpy as np
 from spec_result_parser.models import (
     Format,
     Status,
@@ -17,6 +18,7 @@ from spec_result_parser.models import (
     Corner,
     ParseError,
     ConfigError,
+    Waveform,
 )
 
 
@@ -183,6 +185,37 @@ class TestCorner:
         ]
         c = Corner(name="ff_0", checks=checks)
         assert c.overall_status == Status.MARGIN
+
+
+# ---------------------------------------------------------------------------
+# Task 1: PSF_BINARY, Waveform, SpecTarget.measure
+# ---------------------------------------------------------------------------
+
+
+def test_format_psf_binary_value():
+    assert Format.PSF_BINARY.value == "psf_binary"
+
+
+def test_waveform_creation():
+    w = Waveform(
+        sweep_var="freq",
+        x=np.array([1e6, 2e6]),
+        y=np.array([0.5, 0.3]),
+        unit="V",
+        fmt=Format.PSF_BINARY,
+    )
+    assert w.sweep_var == "freq"
+    assert w.unit == "V"
+
+
+def test_spec_target_measure_defaults_none():
+    t = SpecTarget(name="gain_dc", min_val=60.0, max_val=None, unit="dB")
+    assert t.measure is None
+
+
+def test_spec_target_measure_set():
+    t = SpecTarget(name="ugbw", min_val=10e6, max_val=None, unit="Hz", measure="cross(vout_db, 0)")
+    assert t.measure == "cross(vout_db, 0)"
 
 
 class TestExceptions:
