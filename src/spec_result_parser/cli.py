@@ -5,6 +5,8 @@ Commands:
   spec-parser aggregate -- Aggregate multi-corner results
 """
 import sys
+from pathlib import Path
+
 import click
 
 from spec_result_parser.checker import SpecChecker
@@ -19,6 +21,25 @@ _PARSERS = {
     Format.PSF_ASCII: parse_psf_ascii,
     Format.HSPICE_MT0: parse_hspice_mt0,
 }
+
+_EXT_FORMAT = {".csv": "csv", ".json": "json", ".html": "html"}
+
+
+def _resolve_format(output_format, output_file):
+    """Return (fmt, path) or raise ConfigError."""
+    if output_format is None and output_file is None:
+        return None, None
+    if output_format is None and output_file is not None:
+        ext = Path(output_file).suffix.lower()
+        fmt = _EXT_FORMAT.get(ext)
+        if fmt is None:
+            raise ConfigError(
+                f"Cannot detect format from '{ext}'. Use --format [csv|json|html]"
+            )
+        return fmt, output_file
+    if output_format == "html" and output_file is None:
+        raise ConfigError("HTML output requires --output <file.html>")
+    return output_format, output_file
 
 
 @click.group()
@@ -38,7 +59,13 @@ def main() -> None:
 @click.option("--margin-threshold", default=10.0, show_default=True,
               help="Percentage within a limit to flag as MARGIN.")
 @click.option("--verbose", "-v", is_flag=True, help="Enable debug output.")
-def check(result_file: str, spec: str, margin_threshold: float, verbose: bool) -> None:
+@click.option("--format", "output_format", type=click.Choice(["csv", "json", "html"]),
+              default=None, help="Output format.")
+@click.option("--output", "output_file", type=click.Path(), default=None,
+              help="Output file path.")
+@click.option("--quiet", is_flag=True, help="Suppress terminal output.")
+def check(result_file: str, spec: str, margin_threshold: float, verbose: bool,
+          output_format, output_file, quiet) -> None:
     """Check RESULT_FILE against spec targets and print PASS/FAIL table.
 
     RESULT_FILE: Path to a PSF-ASCII (.psf) or HSPICE MT0 (.mt0) result file.
@@ -48,15 +75,24 @@ def check(result_file: str, spec: str, margin_threshold: float, verbose: bool) -
       1 — one or more FAIL
       2 — file parse error or config error
     """
-    from pathlib import Path
+    # Validate format/output BEFORE parsing (early exit on error)
+    try:
+        fmt, out_path = _resolve_format(output_format, output_file)
+    except ConfigError as exc:
+        click.echo(f"Error: {exc}")
+        sys.exit(2)
+
     path = Path(result_file)
 
     try:
-        fmt = detect(path)
-        if fmt is None:
+        detected_fmt = detect(path)
+        if detected_fmt is None:
             raise ConfigError(f"Unsupported file format: {path.suffix!r}")
 
-        parse_fn = _PARSERS[fmt]
+        if detected_fmt not in _PARSERS:
+            raise ConfigError(f"No parser for format: {detected_fmt}")
+
+        parse_fn = _PARSERS[detected_fmt]
         measurements = parse_fn(path)
         spec_targets = load_spec(spec)
     except (ConfigError, ParseError) as exc:
@@ -71,7 +107,18 @@ def check(result_file: str, spec: str, margin_threshold: float, verbose: bool) -
         for m in measurements
     ]
 
-    TerminalRenderer.render_single(checks)
+    if not quiet:
+        TerminalRenderer.render_single(checks)
+
+    if fmt == "csv":
+        from spec_result_parser.exporters.csv_exporter import export_single as csv_export
+        csv_export(checks, out_path)
+    elif fmt == "json":
+        from spec_result_parser.exporters.json_exporter import export_single as json_export
+        json_export(checks, out_path, spec_file=spec, result_file=result_file)
+    elif fmt == "html":
+        from spec_result_parser.exporters.html_exporter import export_single as html_export
+        html_export(checks, out_path)
 
     from spec_result_parser.models import Status
     has_fail = any(ch.status == Status.FAIL for ch in checks)
@@ -87,8 +134,13 @@ def check(result_file: str, spec: str, margin_threshold: float, verbose: bool) -
 @click.option("--margin-threshold", default=10.0, show_default=True,
               help="Percentage within a limit to flag as MARGIN.")
 @click.option("--verbose", "-v", is_flag=True, help="Enable debug output.")
+@click.option("--format", "output_format", type=click.Choice(["csv", "json", "html"]),
+              default=None, help="Output format.")
+@click.option("--output", "output_file", type=click.Path(), default=None,
+              help="Output file path.")
+@click.option("--quiet", is_flag=True, help="Suppress terminal output.")
 def aggregate(folder: str, spec: str, corners: str, margin_threshold: float,
-              verbose: bool) -> None:
+              verbose: bool, output_format, output_file, quiet) -> None:
     """Aggregate multi-corner results from FOLDER and print corner matrix.
 
     FOLDER: Directory containing PSF-ASCII (.psf) or HSPICE MT0 (.mt0) files.
@@ -99,9 +151,15 @@ def aggregate(folder: str, spec: str, corners: str, margin_threshold: float,
       1 — one or more corners FAIL
       2 — error reading files or spec
     """
-    from pathlib import Path
     from spec_result_parser.corner_aggregator import CornerAggregator
     from spec_result_parser.models import Status
+
+    # Validate format/output BEFORE parsing (early exit on error)
+    try:
+        fmt, out_path = _resolve_format(output_format, output_file)
+    except ConfigError as exc:
+        click.echo(f"Error: {exc}")
+        sys.exit(2)
 
     try:
         spec_targets = load_spec(spec)
@@ -113,7 +171,18 @@ def aggregate(folder: str, spec: str, corners: str, margin_threshold: float,
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
 
-    TerminalRenderer.render_corners(corner_list)
+    if not quiet:
+        TerminalRenderer.render_corners(corner_list)
+
+    if fmt == "csv":
+        from spec_result_parser.exporters.csv_exporter import export_corners as csv_export
+        csv_export(corner_list, out_path)
+    elif fmt == "json":
+        from spec_result_parser.exporters.json_exporter import export_corners as json_export
+        json_export(corner_list, out_path, spec_file=spec, result_folder=folder)
+    elif fmt == "html":
+        from spec_result_parser.exporters.html_exporter import export_corners as html_export
+        html_export(corner_list, out_path)
 
     has_fail = any(c.overall_status == Status.FAIL for c in corner_list)
     sys.exit(1 if has_fail else 0)
