@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "spec-result-parser"
-version = "0.1.0"
+version = "0.2.0"
 description = "CLI tool for analog IC engineers to automate spec checking of Spectre PSF-ASCII and HSPICE MT0 simulation results"
 readme = "README.md"
 license = { text = "MIT" }

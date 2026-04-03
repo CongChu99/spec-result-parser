@@ -10,16 +10,19 @@ from pathlib import Path
 import click
 
 from spec_result_parser.checker import SpecChecker
+from spec_result_parser.evaluator import ExpressionEvaluator
 from spec_result_parser.format_detector import detect
-from spec_result_parser.models import ConfigError, Format, ParseError
+from spec_result_parser.models import ConfigError, Format, ParseError, Waveform
 from spec_result_parser.parsers.hspice_mt0 import parse_hspice_mt0
 from spec_result_parser.parsers.psf_ascii import parse_psf_ascii
+from spec_result_parser.parsers.psf_binary import parse as parse_psf_binary
 from spec_result_parser.renderer import TerminalRenderer
 from spec_result_parser.spec_loader import load_spec
 
 _PARSERS = {
     Format.PSF_ASCII: parse_psf_ascii,
     Format.HSPICE_MT0: parse_hspice_mt0,
+    Format.PSF_BINARY: parse_psf_binary,
 }
 
 _EXT_FORMAT = {".csv": "csv", ".json": "json", ".html": "html"}
@@ -93,8 +96,24 @@ def check(result_file: str, spec: str, margin_threshold: float, verbose: bool,
             raise ConfigError(f"No parser for format: {detected_fmt}")
 
         parse_fn = _PARSERS[detected_fmt]
-        measurements = parse_fn(path)
+        raw = parse_fn(path)
         spec_targets = load_spec(spec)
+
+        # For binary PSF, signals may include Waveforms — evaluate expressions
+        if detected_fmt == Format.PSF_BINARY:
+            signals = raw  # dict[str, Measurement|Waveform]
+            measurements = []
+            for target in spec_targets.values():
+                if target.measure is not None:
+                    m = ExpressionEvaluator.evaluate(target, signals)
+                    if m is not None:
+                        measurements.append(m)
+                elif target.name in signals:
+                    sig = signals[target.name]
+                    if not isinstance(sig, Waveform):
+                        measurements.append(sig)
+        else:
+            measurements = raw  # List[Measurement] from ascii/mt0 parsers
     except (ConfigError, ParseError) as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
