@@ -1,0 +1,6 @@
+# Bandgap Reference spec — PTAT+CTAT, 1.25V nominal, Sky130 PDK
+specs:
+  vref:         { min: 1.235,  max: 1.265,  unit: V      }  # Reference voltage ±1%
+  tc_ppm:       { min: null,   max: 20,     unit: ppm/K  }  # Temperature coefficient
+  psrr_dc:      { min: 55,     max: null,   unit: dB     }  # DC PSRR
+  startup_time: { min: null,   max: 10e-6,  unit: s      }  # Startup time < 10μs

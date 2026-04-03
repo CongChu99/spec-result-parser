@@ -8,7 +8,7 @@ from rich.style import Style
 from rich.table import Table
 from rich import box
 
-from spec_result_parser.models import Corner, SpecCheck, Status
+from spec_result_parser.models import Corner, McSpecStat, SpecCheck, Status
 
 _STATUS_STYLE = {
     Status.PASS: Style(color="green", bold=True),
@@ -192,3 +192,60 @@ class TerminalRenderer:
             con.print(f"[bold green]✓ All {total} corners: PASS[/bold green]")
         else:
             con.print(f"[bold red]✗ {fail_count} of {total} corners have FAIL[/bold red]")
+
+    @classmethod
+    def render_montecarlo(
+        cls,
+        stats: List[McSpecStat],
+        console: Optional[Console] = None,
+    ) -> None:
+        """Render Monte Carlo statistical summary table.
+
+        Columns: Spec | N | Mean | Std (σ) | Min | Max | Cpk | Yield % | Status
+        """
+        con = console or _DEFAULT_CONSOLE
+
+        table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold white")
+        table.add_column("Spec", style="bold")
+        table.add_column("N", justify="right")
+        table.add_column("Mean", justify="right")
+        table.add_column("σ", justify="right")
+        table.add_column("Min", justify="right")
+        table.add_column("Max", justify="right")
+        table.add_column("Cpk", justify="right")
+        table.add_column("Yield %", justify="right")
+        table.add_column("Status", justify="center")
+
+        fail_count = 0
+        for stat in stats:
+            unit = stat.unit or ""
+            style = _FAIL_ROW_STYLE if stat.status == Status.FAIL else None
+
+            cpk_str = f"{stat.cpk:.2f}" if stat.cpk is not None else "—"
+            yield_str = f"{stat.yield_pct:.2f}%" if stat.yield_pct is not None else "—"
+            status_label = stat.status.value.upper()
+            if stat.status == Status.NA:
+                status_label = "N/A"
+            if stat.status == Status.FAIL:
+                fail_count += 1
+
+            table.add_row(
+                stat.name,
+                str(stat.n),
+                _fmt_value(stat.mean, unit),
+                _fmt_value(stat.std, unit),
+                _fmt_value(stat.min_val, unit),
+                _fmt_value(stat.max_val, unit),
+                cpk_str,
+                yield_str,
+                f"[{_STATUS_STYLE[stat.status]}]{status_label}[/]",
+                style=style,
+            )
+
+        con.print(table)
+
+        total = len(stats)
+        if fail_count == 0:
+            con.print(f"[bold green]✓ Monte Carlo: {total} specs checked, all PASS[/bold green]")
+        else:
+            con.print(f"[bold red]✗ Monte Carlo: {fail_count} of {total} specs FAIL[/bold red]")

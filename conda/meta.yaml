@@ -1,0 +1,55 @@
+{% set name = "spec-result-parser" %}
+{% set version = "0.2.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/spec_result_parser-{{ version }}.tar.gz
+  # sha256: <update after uploading to PyPI>
+
+build:
+  noarch: python
+  number: 0
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  entry_points:
+    - spec-parser = spec_result_parser.cli:main
+
+requirements:
+  host:
+    - python >=3.9
+    - pip
+    - hatchling
+  run:
+    - python >=3.9
+    - click >=8.0
+    - rich >=12.0
+    - pyyaml >=6.0
+    - pandas >=1.5
+    - numpy >=1.21
+
+test:
+  imports:
+    - spec_result_parser
+  commands:
+    - spec-parser --version
+    - spec-parser --help
+
+about:
+  home: https://github.com/CongChu99/spec-result-parser
+  license: MIT
+  license_file: LICENSE
+  summary: "CLI for analog IC engineers — automated PASS/FAIL spec checking of Spectre PSF and HSPICE simulation results"
+  description: |
+    spec-result-parser reduces post-simulation spec verification from hours of
+    manual copy-paste into a single command. Supports Spectre PSF-ASCII,
+    Cadence binary PSF, and HSPICE MT0 formats. Features multi-corner
+    aggregation, Monte Carlo statistical analysis (Cpk, yield %), and
+    export to CSV/JSON/HTML dashboards.
+  doc_url: https://github.com/CongChu99/spec-result-parser#readme
+  dev_url: https://github.com/CongChu99/spec-result-parser
+
+extra:
+  recipe-maintainers:
+    - CongChu99

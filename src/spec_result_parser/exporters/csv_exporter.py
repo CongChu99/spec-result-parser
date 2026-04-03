@@ -7,7 +7,33 @@ import sys
 from pathlib import Path
 from typing import List, Union
 
-from spec_result_parser.models import Corner, SpecCheck
+from spec_result_parser.models import Corner, McSpecStat, SpecCheck
+
+
+_MC_FIELDS = ["spec", "n", "mean", "std", "min", "max", "cpk", "yield_pct", "status", "unit"]
+
+
+def export_montecarlo(
+    stats: "List[McSpecStat]",
+    dest=None,
+) -> None:
+    """Write Monte Carlo statistics to CSV."""
+    rows = []
+    for s in stats:
+        rows.append({
+            "spec": s.name,
+            "n": s.n,
+            "mean": f"{s.mean:.6g}",
+            "std": f"{s.std:.6g}",
+            "min": f"{s.min_val:.6g}",
+            "max": f"{s.max_val:.6g}",
+            "cpk": f"{s.cpk:.4f}" if s.cpk is not None else "",
+            "yield_pct": f"{s.yield_pct:.4f}" if s.yield_pct is not None else "",
+            "status": s.status.value,
+            "unit": s.unit or "",
+        })
+    _write_csv(_MC_FIELDS, rows, dest)
+
 
 
 _SINGLE_FIELDS = ["spec", "value", "unit", "min", "max", "status", "margin_pct"]

@@ -207,5 +207,73 @@ def aggregate(folder: str, spec: str, corners: str, margin_threshold: float,
     sys.exit(1 if has_fail else 0)
 
 
+
+@main.command()
+@click.argument("folder", type=click.Path(exists=True, file_okay=False))
+@click.option("--spec", "-s", required=True, type=click.Path(exists=True),
+              help="YAML or CSV spec file with min/max targets.")
+@click.option("--n-sigma", default=3.0, show_default=True,
+              help="Sigma multiplier for status band (3 = 99.73%).")
+@click.option("--margin-threshold", default=10.0, show_default=True,
+              help="Percentage within a limit to flag as MARGIN.")
+@click.option("--format", "output_format", type=click.Choice(["csv", "json", "html"]),
+              default=None, help="Output format.")
+@click.option("--output", "output_file", type=click.Path(), default=None,
+              help="Output file path.")
+@click.option("--quiet", is_flag=True, help="Suppress terminal output.")
+@click.option("--verbose", "-v", is_flag=True, help="Enable debug output.")
+def montecarlo(folder: str, spec: str, n_sigma: float, margin_threshold: float,
+               output_format, output_file, quiet, verbose) -> None:
+    """Run Monte Carlo statistical analysis on FOLDER of simulation result files.
+
+    Each file in FOLDER is treated as one MC sample.  Computes mean, σ, Cpk,
+    and estimated yield % for every spec, then shows a PASS/FAIL/MARGIN summary.
+
+    Exit codes:
+      0 — all specs PASS (mean±N·σ within bounds and Cpk ≥ 1.33)
+      1 — one or more specs FAIL
+      2 — error reading files or spec
+    """
+    from spec_result_parser.monte_carlo import MonteCarloAggregator
+    from spec_result_parser.models import Status, ConfigError
+
+    try:
+        fmt, out_path = _resolve_format(output_format, output_file)
+    except ConfigError as exc:
+        click.echo(f"Error: {exc}")
+        sys.exit(2)
+
+    try:
+        spec_targets = load_spec(spec)
+        stats = MonteCarloAggregator.aggregate(
+            Path(folder),
+            spec_targets,
+            margin_threshold=margin_threshold,
+            n_sigma=n_sigma,
+        )
+    except (ConfigError, ParseError) as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
+
+    if not quiet:
+        TerminalRenderer.render_montecarlo(stats)
+
+    if fmt == "csv":
+        from spec_result_parser.exporters.csv_exporter import export_montecarlo as csv_mc
+        csv_mc(stats, out_path)
+    elif fmt == "json":
+        from spec_result_parser.exporters.json_exporter import export_montecarlo as json_mc
+        json_mc(stats, out_path, spec_file=spec, mc_folder=folder)
+    elif fmt == "html":
+        from spec_result_parser.exporters.html_exporter import export_montecarlo as html_mc
+        html_mc(stats, out_path)
+
+    has_fail = any(s.status == Status.FAIL for s in stats)
+    sys.exit(1 if has_fail else 0)
+
+
 if __name__ == "__main__":
     main()

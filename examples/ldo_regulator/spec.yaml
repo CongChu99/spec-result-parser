@@ -1,0 +1,6 @@
+# LDO Regulator spec — Sky130 PDK, 1.2V / 5V input
+specs:
+  vout_err: { min: null,   max: 5.0e-3,  unit: V   }  # Output voltage error (max 5mV)
+  psrr:     { min: 50,     max: null,    unit: dB  }  # Power supply rejection ratio
+  dropout:  { min: null,   max: 300e-3,  unit: V   }  # Dropout voltage (max 300mV)
+  iq:       { min: null,   max: 100e-6,  unit: A   }  # Quiescent current (max 100μA)

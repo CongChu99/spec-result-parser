@@ -1,0 +1,20 @@
+// Spectre PSF ASCII
+HEADER
+"PSFversion" "1.1"
+"simulator" "spectre"
+END HEADER
+TYPE
+"real" FLOAT DOUBLE PROP(
+"units" ""
+"scale" "LINEAR"
+"grid" 1
+)
+END TYPE
+VALUE
+"gain_dc" FLOAT DOUBLE 6.714357e+01 dB
+"ugbw" FLOAT DOUBLE 1.149332e+07 Hz
+"pm" FLOAT DOUBLE 6.367532e+01 deg
+"offset_v" FLOAT DOUBLE 1.326260e-04 V
+"cmrr" FLOAT DOUBLE 7.937221e+01 dB
+"psrr" FLOAT DOUBLE 7.832666e+01 dB
+END VALUE

@@ -1,0 +1,9 @@
+# OTA spec — Two-stage Miller compensated, Sky130 PDK
+# Verified across 5 PVT corners: TT/27, SS/125, FF/-40, SF/27, FS/27
+specs:
+  gain_dc:  { min: 60,      max: null,  unit: dB  }   # DC open-loop gain
+  ugbw:     { min: 10.0e6,  max: null,  unit: Hz  }   # Unity-gain bandwidth
+  pm:       { min: 45,      max: null,  unit: deg }   # Phase margin
+  offset_v: { min: null,    max: 5.0e-3, unit: V  }   # Input offset voltage
+  cmrr:     { min: 70,      max: null,  unit: dB  }   # Common-mode rejection ratio
+  psrr:     { min: 65,      max: null,  unit: dB  }   # Power supply rejection ratio

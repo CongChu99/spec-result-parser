@@ -122,6 +122,28 @@ class Corner:
 
 
 # ---------------------------------------------------------------------------
+# Monte Carlo
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class McSpecStat:
+    """Statistical summary for one spec across N Monte Carlo samples."""
+
+    name: str
+    n: int                        # number of samples
+    mean: float
+    std: float                    # 1-sigma standard deviation
+    min_val: float                # observed minimum across samples
+    max_val: float                # observed maximum across samples
+    cpk: Optional[float]          # process capability index; None if unbounded spec
+    yield_pct: Optional[float]    # estimated yield % from Cpk; None if cpk is None
+    status: Status                # overall MC status (FAIL if mean±3σ violates spec)
+    unit: Optional[str]
+    values: List[float]           # raw sample values (for histogram)
+
+
+# ---------------------------------------------------------------------------
 # Exceptions
 # ---------------------------------------------------------------------------
 

@@ -92,7 +92,6 @@ def export_corners(
     ]
     _write_json(payload, dest)
 
-
 def _write_json(payload: dict, dest) -> None:
     text = json.dumps(payload, indent=2, default=str)
     if dest is None:
@@ -101,3 +100,51 @@ def _write_json(payload: dict, dest) -> None:
         dest.write(text)
     else:
         Path(dest).write_text(text, encoding="utf-8")
+
+
+def export_montecarlo(
+    stats,
+    dest=None,
+    spec_file: str = "",
+    mc_folder: str = "",
+    version: str = _VERSION,
+) -> None:
+    """Write Monte Carlo statistics to JSON."""
+    fail_n = sum(1 for s in stats if s.status.value == "FAIL")
+    margin_n = sum(1 for s in stats if s.status.value == "MARGIN")
+    overall = "FAIL" if fail_n else ("MARGIN" if margin_n else "PASS")
+
+    payload = {
+        "meta": {
+            "tool": "spec-result-parser",
+            "version": version,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "spec_file": spec_file,
+            "mc_folder": mc_folder,
+            "mode": "monte_carlo",
+        },
+        "summary": {
+            "total": len(stats),
+            "fail": fail_n,
+            "margin": margin_n,
+            "pass": len(stats) - fail_n - margin_n,
+            "overall": overall,
+        },
+        "results": [
+            {
+                "spec": s.name,
+                "n": s.n,
+                "mean": s.mean,
+                "std": s.std,
+                "min": s.min_val,
+                "max": s.max_val,
+                "cpk": s.cpk,
+                "yield_pct": s.yield_pct,
+                "status": s.status.value,
+                "unit": s.unit,
+                "values": s.values,
+            }
+            for s in stats
+        ],
+    }
+    _write_json(payload, dest)

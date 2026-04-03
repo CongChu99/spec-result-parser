@@ -15,7 +15,13 @@ After a corner sweep, analog IC engineers manually copy values from Spectre/HSPI
 ## Installation
 
 ```bash
+# pip
 pip install spec-result-parser
+
+# conda / mamba (conda-forge)
+conda install -c conda-forge spec-result-parser
+# or
+mamba install spec-result-parser
 ```
 
 Requires Python ≥ 3.9.
@@ -118,6 +124,32 @@ Options:
   --output PATH                 Write output to this file (auto-detect format from extension)
   --quiet                       Suppress terminal table output
   -v, --verbose                 Enable debug output
+```
+
+### `montecarlo`
+
+```
+spec-parser montecarlo FOLDER --spec SPEC_FILE [OPTIONS]
+
+Options:
+  -s, --spec PATH               YAML or CSV spec file [required]
+  --n-sigma FLOAT               Sigma band for status check [default: 3.0]
+  --margin-threshold FLOAT      % within a limit to flag as MARGIN [default: 10.0]
+  --format [csv|json|html]      Export results in this format
+  --output PATH                 Write output to this file
+  --quiet                       Suppress terminal output
+```
+
+Each file in FOLDER is treated as one Monte Carlo sample.  The command computes
+`mean`, `σ`, `Cpk`, and **estimated yield %** for every spec, and flags
+`FAIL` when `mean ± 3σ` violates a bound.
+
+```bash
+# Terminal summary
+spec-parser montecarlo ./mc_runs/ --spec opamp.spec.yaml
+
+# HTML dashboard with per-spec histograms
+spec-parser montecarlo ./mc_runs/ --spec opamp.spec.yaml --output mc_report.html
 ```
 
 ## Supported Formats

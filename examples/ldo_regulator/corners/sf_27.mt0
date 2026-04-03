@@ -1,0 +1,5 @@
+$ HSPICE — corners/sf_27.mt0
+vout_err=4.500000e-03
+psrr=5.800000e+01
+dropout=1.950000e-01
+iq=4.200000e-05
