@@ -6,6 +6,11 @@
 # c4flow state (local-only, not committed)
 docs/c4flow/.state.json
 
+# C4Flow local-only directories (not for public repo)
+.agents/
+.beads/
+docs/
+
 # Python
 __pycache__/
 *.py[cod]
